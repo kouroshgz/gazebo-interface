@@ -1,0 +1,3 @@
+/mnt/c/Users/Kourosh/scenic-stuff/Scenic/src/scenic/simulators/gazebo/util/plugins/build/CMakeFiles/rebuild_cache.dir
+/mnt/c/Users/Kourosh/scenic-stuff/Scenic/src/scenic/simulators/gazebo/util/plugins/build/CMakeFiles/edit_cache.dir
+/mnt/c/Users/Kourosh/scenic-stuff/Scenic/src/scenic/simulators/gazebo/util/plugins/build/CMakeFiles/pose_plugin.dir

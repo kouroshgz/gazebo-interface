@@ -1,0 +1,25 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/usr/include/gazebo-11/**",
+                "/usr/include/ignition/math6",
+                "/usr/include/sdformat-9.8/sdf",
+                "/usr/include/ignition/**",
+                "/usr/include/ignition/common3",
+                "/usr/include/ignition/fuel_tools4",
+                "/usr/include/ignition/msgs5",
+                "/usr/include/ignition/transport8",
+                "/usr/include/ignition/sdformat12"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/clang-12",
+            "cStandard": "c17",
+            "cppStandard": "c++14",
+            "intelliSenseMode": "linux-clang-x64"
+        }
+    ],
+    "version": 4
+}

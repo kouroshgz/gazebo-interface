@@ -25,7 +25,9 @@ namespace gazebo
             event::ConnectionPtr updateConnection;
             // for publishing pose 
             transport::NodePtr node;
+            // transport::NodePtr sub;
             transport::PublisherPtr pub;
+            // transport::SubscriberPtr stats;
     };
     // register plugin with simulator
     GZ_REGISTER_MODEL_PLUGIN(PosePlugin)

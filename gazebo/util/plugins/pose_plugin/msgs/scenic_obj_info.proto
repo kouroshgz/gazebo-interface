@@ -1,0 +1,12 @@
+package scenic_obj_info_msgs.msgs;
+import "vector3d.proto";
+import "quaternion.proto";
+
+message ScenicObjectInfo 
+{
+    required gazebo.msgs.Vector3d       position    = 1;
+    required gazebo.msgs.Quaternion     orientation = 2;
+    required gazebo.msgs.Vector3d       angVelocity = 3;
+    required gazebo.msgs.Vector3d       linVelocity = 4;
+    required string                     name        = 5;                           
+}

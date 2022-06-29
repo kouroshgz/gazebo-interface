@@ -32,7 +32,7 @@ from util/pygazebo/msg import pygazebo.msg.factory_pb2
 from util/pygazebo/msg import pygazebo.msg.quaternion_pb2
 from util/pygazebo/msg import pygazebo.mgs.vector3d_pb2
 from util/pygazebo/msg import pygazebo.msg.pose_pb2
-
+from scipy.spatial.transform import Rotation as R
 from scenic.core.simulators import Simulator, Simulation
 from scenic.core.vectors import Vector
 # should include pygazebo
@@ -91,7 +91,7 @@ class GazeboSimulator(Simulator):
         
     def createSimulation(self, scene, verbosity=0):
         # unsure of what else to include here
-        return GazeboSimulation(scene)    
+        return GazeboSimulation(scene, self.world_publisher, self.model_publisher, self.manager)    
 
 class GazeboSimulation(Simulation):
     """`Simulation` object for Gazebo.
@@ -100,7 +100,7 @@ class GazeboSimulation(Simulation):
         world_publisher: publisher object for world_control messages
         model_publisher: publisher object for factory messages (model spawning)
     """
-    def __init__(self, scene, world_publisher, model_publisher, verbosity=0 ):
+    def __init__(self, scene, world_publisher, model_publisher, manager, verbosity=0 ):
         self.world_publisher = world_publisher
         self.model_publisher = model_publisher
         self.objects         = scene.objects
@@ -151,19 +151,65 @@ class GazeboSimulation(Simulation):
         await self.model_publisher.publish(factory)
     # retrieve properties from object
     # note: discerning between objects spawned in dynamically vs objects baked into world?
-    def getProps(self, name):
+    """
+    Name:        field in gazeboObject that specifies the model being referred to
+    Properties:  ?
+    Summary:
+    For a given object, subscribes to its scenic_info topic and pulls its info, then updates properties
+    Note:
+    may actually be easier to do an all at once pull, because youd only be dealing with a single subscriber? 
+    could also kill the subscriber at the end of this function each time.
+    """
+    def getProperties(self, name, properties):
+        # create topic name from model name
+        topic_name = "~/" + name +"/scenic_info"
+        # create subscriber to named topic (not yet sure if thats the appropriate message type)
+        # may need to generate python version of custom gazebo message
+        prop_sub   = await self.manager.subscribe(
+            topic_name, "scenic_obj_info_msgs", prop_callback
+        )
         pass
-    
+
+    def prop_callback(data):
+        # a 3d vector containing position coords (X, Y, Z)
+        pos    = data.position
+        # a quaternion containing the orientation coords (W, X, Y, Z)
+        orient = data.orientation
+        # a 3d vector containing linear velocity data
+        lin    = data.linvelocity
+        # a 3d vector containing angular velocity data
+        ang    = data.angvelocity
+
+        # format position data
+        x = pos.x
+        y = pos.y 
+        elevation = pos.z 
+
+        # format linear velocity (speed) (drop z, then what?)
+
+        # format angular velocity (only the rotation across z?)
+
+        # format rotation (heading)
+        r = R.from_quat(orient)
+
+
+
+
+
     # should this be done on init?
     def reset(self):
         pass
     # want a certain time
-    # default step in Gazebo is 1ms
+
+    # currently steps through simulation 1 iteration (1ms)
     def step():
+        # TODO: figure out multistep
         wc_step  = pygazebo.msg.world_control_pb2.WorldControl()
         wc_step.step = True
         await self.world_publisher.publish(wc_step)
         await asyncio.sleep(1)
+
+
 
 
 # clean up:

@@ -1,0 +1,6 @@
+/mnt/c/Users/Kourosh/scenic-stuff/Scenic/src/scenic/simulators/gazebo/util/plugins/delete_models/build/CMakeFiles/rebuild_cache.dir
+/mnt/c/Users/Kourosh/scenic-stuff/Scenic/src/scenic/simulators/gazebo/util/plugins/delete_models/build/CMakeFiles/edit_cache.dir
+/mnt/c/Users/Kourosh/scenic-stuff/Scenic/src/scenic/simulators/gazebo/util/plugins/delete_models/build/CMakeFiles/delete_models.dir
+/mnt/c/Users/Kourosh/scenic-stuff/Scenic/src/scenic/simulators/gazebo/util/plugins/delete_models/build/msgs/CMakeFiles/rebuild_cache.dir
+/mnt/c/Users/Kourosh/scenic-stuff/Scenic/src/scenic/simulators/gazebo/util/plugins/delete_models/build/msgs/CMakeFiles/edit_cache.dir
+/mnt/c/Users/Kourosh/scenic-stuff/Scenic/src/scenic/simulators/gazebo/util/plugins/delete_models/build/msgs/CMakeFiles/scenic_delete_models_msgs.dir

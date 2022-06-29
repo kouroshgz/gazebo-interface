@@ -1,0 +1,11 @@
+package scenic_delete_models_msgs.msgs;
+
+message ScenicDeleteModels
+{
+    // set clearAll to true to delete all models in world
+    required bool   clearAll = 1;
+    // if you wish to delete 1 object only, set clearAll to false and specify the name of the object
+    optional string name     = 2;
+    // wether or not to reset time, model poses, configurations in simulation
+    required bool   reset    = 3;
+}

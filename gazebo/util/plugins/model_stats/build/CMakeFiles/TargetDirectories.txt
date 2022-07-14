@@ -1,0 +1,6 @@
+/mnt/c/Users/Kourosh/scenic-stuff/Scenic/src/scenic/simulators/gazebo/util/plugins/model_stats/build/CMakeFiles/rebuild_cache.dir
+/mnt/c/Users/Kourosh/scenic-stuff/Scenic/src/scenic/simulators/gazebo/util/plugins/model_stats/build/CMakeFiles/edit_cache.dir
+/mnt/c/Users/Kourosh/scenic-stuff/Scenic/src/scenic/simulators/gazebo/util/plugins/model_stats/build/CMakeFiles/model_stats.dir
+/mnt/c/Users/Kourosh/scenic-stuff/Scenic/src/scenic/simulators/gazebo/util/plugins/model_stats/build/msgs/CMakeFiles/rebuild_cache.dir
+/mnt/c/Users/Kourosh/scenic-stuff/Scenic/src/scenic/simulators/gazebo/util/plugins/model_stats/build/msgs/CMakeFiles/edit_cache.dir
+/mnt/c/Users/Kourosh/scenic-stuff/Scenic/src/scenic/simulators/gazebo/util/plugins/model_stats/build/msgs/CMakeFiles/scenic_obj_info_msgs.dir

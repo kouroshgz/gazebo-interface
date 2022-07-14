@@ -1,0 +1,6 @@
+# Hashes of file build rules.
+e1d730a9ff6d428acf03baf670e91bf4 msgs/header.pb.h
+59d33f803008fec3fbf537eb8ff0fa0e msgs/quaternion.pb.h
+a964056bf55cb5d79e0c02afcd4c7b6d msgs/scenic_obj_info.pb.h
+7a17adc3c0b80626791d774c5935790f msgs/time.pb.h
+4c3dd9475bd966c7412fbc66b6caf8df msgs/vector3d.pb.h

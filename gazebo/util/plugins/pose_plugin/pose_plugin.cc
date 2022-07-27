@@ -5,6 +5,7 @@ using namespace gazebo;
 // note: have to extend gazebo path to use plugin
 
 void PosePlugin::Load(physics::ModelPtr _parent, sdf::ElementPtr _sdf){
+    std::cout<<"in pose_plugin load"<<std::endl;
     this->model = _parent;
     this->sdf   = _sdf;
     // listen to update event, which is broadcast every simulation iteration

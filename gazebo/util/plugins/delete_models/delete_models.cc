@@ -22,36 +22,6 @@ void DeleteModels::callback(ScenicDeleteModelsPtr &_msg){
     std::cout << "in callback in delete plugin" << std::endl; 
     this->message = _msg;
     this->gotMsg = true;
-
-
-    // if (_msg->clearall()){
-    //     // get vector of all models in world
-    //     gazebo::physics::Model_V v = this->world->Models();
-    //     // do a regex match on the word scenic (idea is to prepend this to the name of each dynamically created object)
-    //     std::regex re ("scenic");
-    //     // remove all models whose name begins with "scenic"
-        
-    //     for (auto e : v) {
-    //         std::cout << "current model: " << e->GetName() << std::endl;
-    //         if (std::regex_search(e->GetName(), re)) {
-    //             std::cout << "in regex if" << std::endl;
-    //             this->world->RemoveModel(e->GetName());
-    //         }
-    //     }
-    //     std::cout << "done delete loop" << std::endl;
-    //     // idea is to iterate through the vector and delete all models matching a criteria that will 
-    //     // only apply to dynamically created models. 
-    //     this->world->ClearModels();
-    //     this->world->Reset();
-    // }
-    // else if (!(_msg->clearall()) && !(_msg->name().empty())) {
-    //     this->world->RemoveModel(_msg->name());
-    // }
-
-    // if (_msg->reset()) {
-    //     this->world->Reset();
-    // }
-    
     return;
 }
 

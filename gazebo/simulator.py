@@ -105,10 +105,11 @@ class GazeboSimulation(Simulation):
                     "scenic_delete_models_msgs.msgs"
                 )            
                 def callback(data):
+                    breakpoint()
                     print("In callback: numSpawns is " + str(self.numSpawns))
                     # due to how gazebo propagates spawns, the initial callback for first object needs to be a NOP
-                    if (self.numSpawns == 1):
-                        return
+                    # if (self.numSpawns == 1):
+                        # return
                     print("In callback, curr event counter is: " + str(self.eventCounter))
                     self.eventCounter -=1 
                     if (self.eventCounter == 0):
@@ -157,19 +158,17 @@ class GazeboSimulation(Simulation):
 
     # currently assuming that object is some kind of sdf string
     def createObjectInSimulator(self, obj):
-        breakpoint()
         print("in create object")
         self.numSpawns +=1
         async def a_createObjectInSimulator(self, obj):
             # currently assume desired positions/orientations are specified in the SDF, make more dynamic later
             print("in factory!")
-            print(obj)
+            # print(obj)
             factory_msg = pygazebo.msg.factory_pb2.Factory()
             factory_msg.sdf = obj.modelSDF
             print(factory_msg.sdf)
             await asyncio.sleep(1)
             await self.factory_publisher.publish(factory_msg)
-            await asyncio.sleep(1)
             # if all spawn messages have been sent, do one iteration to propagate spawn requests
             if (self.numSpawns == self.initCount):
                 await self.world_publisher.publish(self.wc_step)
@@ -177,43 +176,70 @@ class GazeboSimulation(Simulation):
             print("end async model spawn ")
         self.loop.run_until_complete(a_createObjectInSimulator(self, obj))
         print("end create object")
-
-    def getProperties(self, obj, properties):
-        breakpoint()
-        async def a_getProperties(self, obj):
-            breakpoint()
+    # overwrite updateObjects
+    def updateObjects(self):
+        async def a_updateObjects(self):
             print("about to wait on objectDataEvent")
             await self.objectDataEvent.wait()
-            # super().updateObjects()
-            print("Done waiting on objectDataEvent")
-            # position + elevation
-            pos_x = self.object_map[obj.name].position.x
-            pos_y = self.object_map[obj.name].position.y
-            scenic_position = Vector(pos_x, pos_y)
-            scenic_elevation = self.object_map[obj.name].position.z
-            # velocity + speed
-            vel_x = self.object_map[obj.name].linVelocity.x
-            vel_y = self.object_map[obj.name].linVelocity.y
-            scenic_velocity = (vel_x, vel_y)
-            scenic_speed = math.hypot(*scenic_velocity)
-            # angular speed
-            scenic_ang_speed = self.object_map[obj.name].angVelocity.y
-            # converting quaternion to scenic heading
-            py_quat = [self.object_map[obj.name].orientation.x, self.object_map[obj.name].orientation.y, self.object_map[obj.name].orientation.z, self.object_map[obj.name].orientation.w]
-            r = R.from_quat(py_quat)
-            heading_array = r.as_euler('zxy')
-            values = dict(
-	        position=scenic_position,
-	        elevation=scenic_elevation,
-	        heading=heading_array[0],
-	        velocity=scenic_velocity,
-	        speed=scenic_speed,
-	        angularSpeed=scenic_ang_speed,
-            )
-            return values
-        return self.loop.run_until_complete(a_getProperties(self, obj))
+        self.loop.run_until_complete(a_updateObjects(self))
+        super().updateObjects()
+    def getProperties(self, obj, properties):
+        pos_x = self.object_map[obj.name].position.x
+        pos_y = self.object_map[obj.name].position.y
+        scenic_position = Vector(pos_x, pos_y)
+        scenic_elevation = self.object_map[obj.name].position.z
+        # velocity + speed
+        vel_x = self.object_map[obj.name].linVelocity.x
+        vel_y = self.object_map[obj.name].linVelocity.y
+        scenic_velocity = (vel_x, vel_y)
+        scenic_speed = math.hypot(*scenic_velocity)
+        # angular speed
+        scenic_ang_speed = self.object_map[obj.name].angVelocity.y
+        # converting quaternion to scenic heading
+        py_quat = [self.object_map[obj.name].orientation.x, self.object_map[obj.name].orientation.y, self.object_map[obj.name].orientation.z, self.object_map[obj.name].orientation.w]
+        r = R.from_quat(py_quat)
+        heading_array = r.as_euler('zxy')
+        values = dict(
+	    position=scenic_position,
+	    elevation=scenic_elevation,
+	    heading=heading_array[0],
+	    velocity=scenic_velocity,
+	    speed=scenic_speed,
+	    angularSpeed=scenic_ang_speed,
+        )
+        return values        
+        # async def a_getProperties(self, obj):
+        #     print("about to wait on objectDataEvent")
+        #     await self.objectDataEvent.wait()
+        #     # super().updateObjects()
+        #     print("Done waiting on objectDataEvent")
+        #     # position + elevation
+        #     pos_x = self.object_map[obj.name].position.x
+        #     pos_y = self.object_map[obj.name].position.y
+        #     scenic_position = Vector(pos_x, pos_y)
+        #     scenic_elevation = self.object_map[obj.name].position.z
+        #     # velocity + speed
+        #     vel_x = self.object_map[obj.name].linVelocity.x
+        #     vel_y = self.object_map[obj.name].linVelocity.y
+        #     scenic_velocity = (vel_x, vel_y)
+        #     scenic_speed = math.hypot(*scenic_velocity)
+        #     # angular speed
+        #     scenic_ang_speed = self.object_map[obj.name].angVelocity.y
+        #     # converting quaternion to scenic heading
+        #     py_quat = [self.object_map[obj.name].orientation.x, self.object_map[obj.name].orientation.y, self.object_map[obj.name].orientation.z, self.object_map[obj.name].orientation.w]
+        #     r = R.from_quat(py_quat)
+        #     heading_array = r.as_euler('zxy')
+        #     values = dict(
+	    #     position=scenic_position,
+	    #     elevation=scenic_elevation,
+	    #     heading=heading_array[0],
+	    #     velocity=scenic_velocity,
+	    #     speed=scenic_speed,
+	    #     angularSpeed=scenic_ang_speed,
+        #     )
+        #     return values
+        # return self.loop.run_until_complete(a_getProperties(self, obj))
     def destroy(self):
-        breakpoint()
         print("in simulation destroy")
         async def a_destroy(self):
             print("in async simulation destroy")

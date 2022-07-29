@@ -4,7 +4,7 @@ class Box(GazeboObject):
     name: 'scenicbox'
     modelSDF:  """<?xml version='1.0'?>
         <sdf version ='1.5'>
-          <model name ='scenicbox'>
+          <model name ='scenicegobox'>
             <pose>1 2 0 0 0 0</pose>
             <link name ='link'>
               <pose>0 0 .5 0 0 0</pose>
@@ -44,7 +44,7 @@ class NotEgoBox(GazeboObject):
     name: 'scenicnotegobox'
     modelSDF:  """<?xml version='1.0'?>
         <sdf version ='1.5'>
-          <model name ='scenicbox'>
+          <model name ='scenicnotegobox'>
             <pose>1 2 0 0 0 0</pose>
             <link name ='link'>
               <pose>0 0 .5 0 0 0</pose>

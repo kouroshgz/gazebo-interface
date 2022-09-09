@@ -71,6 +71,8 @@ class GazeboSimulation(Simulation):
         self.simulationCount = simulationCount
         # stores object properties of all dynamic objects in simulation
         self.object_map = dict()
+        # stores flags for per-object callback sync
+        self.callbackMap = dict()
         # messages to enable stepping through simulation and deleting dynamic objects + resetting non-dynamic objects
         self.wc_step  = pygazebo.msg.world_control_pb2.WorldControl()
         self.wc_step.step = True
@@ -82,7 +84,7 @@ class GazeboSimulation(Simulation):
         # event to act as a lock for update info, making sure it doesnt occur until all callbacks complete
         self.objectDataEvent = asyncio.Event()
         # self.objectDataEvent.clear()
-        self.objectDataEvent.set()
+        # self.objectDataEvent.set()
         # need a count of exactly how many dynamic objects exist in scene
         self.eventCounter = 0
         for obj in scene.objects:
@@ -114,23 +116,16 @@ class GazeboSimulation(Simulation):
                 def callback(data):
                     # breakpoint()
                     print("In callback: numSpawns is " + str(self.numSpawns))
-                    # due to how gazebo propagates spawns, the initial callback for first object needs to be a NOP
-                    # if (self.numSpawns < self.initCount):
-                    #     print("skipping this callback")
-                    #     return
-                    print("In callback, curr event counter is: " + str(self.eventCounter))
-                    self.eventCounter -=1 
-                    if (self.eventCounter == 0):
-                        self.objectDataEvent.set()
-                    if (self.eventCounter < 0):
-                        self.eventCounter = self.initCount
                     stats = scenic_obj_info_pb2.ScenicObjectInfo()
                     stats.ParseFromString(data)
                     print("obj in callback's name: " + stats.name)
-
+                    self.callbackMap[stats.name] = True
                     # on each update, rewrite current stats for the target object
                     self.object_map[stats.name] = stats
-                    print(self.object_map)
+                    print("In callback, " + str(len(self.callbackMap)) + " unique callbacks")
+                    if (len(self.callbackMap) == self.initCount):
+                        self.objectDataEvent.set()
+                    # print(self.object_map)
                 self.stats_subscriber  = await self.manager.subscribe(
                     '/gazebo/default/scenic_model_stats', "scenic_obj_info_msgs.msgs", callback
                 )
@@ -172,6 +167,7 @@ class GazeboSimulation(Simulation):
         async def a_internal_step(self):
             print("internal gazebo step")
             await self.world_publisher.publish(self.wc_step)
+            await asyncio.sleep(1)
         self.loop.run_until_complete(a_internal_step(self))
     
     # currently assuming that object is some kind of sdf string
@@ -188,18 +184,12 @@ class GazeboSimulation(Simulation):
             await asyncio.sleep(1)
             await self.factory_publisher.publish(factory_msg)
             print("end async model spawn ")
-        self.loop.run_until_complete(a_createObjectInSimulator(self, obj))
-         # if all spawn messages have been sent, do one iteration to propagate spawn requests
-        if (self.numSpawns <= self.initCount):
-            self.internal_step()
-        
+        self.loop.run_until_complete(a_createObjectInSimulator(self, obj))        
 
     # overwrite updateObjects
     def updateObjects(self):
-        async def a_updateObjects(self):
-            print("about to wait on objectDataEvent")
-            await self.objectDataEvent.wait()
-        self.loop.run_until_complete(a_updateObjects(self))
+        while len(self.callbackMap) != self.initCount:
+            self.internal_step()
         super().updateObjects()
 
 

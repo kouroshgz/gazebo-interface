@@ -27,6 +27,7 @@ class GazeboSimulator(Simulator):
         self.timeout = 30
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
+        self.simulationCount = 0
         # messages to enable stepping through simulation and deleting dynamic objects + resetting non-dynamic objects
         self.connected = False
         async def a_connect(self):
@@ -46,25 +47,28 @@ class GazeboSimulator(Simulator):
        
         
     def createSimulation(self, scene, verbosity=0):
-        return GazeboSimulation(scene, self.manager, self.connected, self.loop)
+        self.simulationCount += 1
+        return GazeboSimulation(scene, self.manager, self.connected, self.loop, self.simulationCount)
 
     def destroy(self):
-        # print("in simulator destroy")
-        # async def a_destroy(self):
-        #     print ("in simulator async destroy")
-        #     await self.manager.stop()
-        #     print("end async simulator destroy")
-        # self.loop.run_until_complete(a_destroy(self))
-        # print("end simulator destroy")
+        print("in simulator destroy")
+        async def a_destroy(self):
+            print ("in simulator async destroy")
+            # await self.manager.stop()
+            print("end async simulator destroy")
+        self.loop.run_until_complete(a_destroy(self))
+        print("end simulator destroy")
         pass
 
 # Note: Currently assuming gazebo world is started in paused state via cli 
 class GazeboSimulation(Simulation):
-    def __init__(self, scene, manager, connected, loop):
+    def __init__(self, scene, manager, connected, loop, simulationCount):
         print("in init of GazeboSimulation")
         super().__init__(scene)
         # pygazebo connection manager
         self.manager = manager
+        # track # of simulations to try and work around multiple publisher issue until un-advertising is figured out
+        self.simulationCount = simulationCount
         # stores object properties of all dynamic objects in simulation
         self.object_map = dict()
         # messages to enable stepping through simulation and deleting dynamic objects + resetting non-dynamic objects
@@ -77,6 +81,7 @@ class GazeboSimulation(Simulation):
         self.loop = loop
         # event to act as a lock for update info, making sure it doesnt occur until all callbacks complete
         self.objectDataEvent = asyncio.Event()
+        # self.objectDataEvent.clear()
         self.objectDataEvent.set()
         # need a count of exactly how many dynamic objects exist in scene
         self.eventCounter = 0
@@ -90,6 +95,8 @@ class GazeboSimulation(Simulation):
         #advertises necessary topics and wipes world of any dynamic objects.
         def advertise(self):
             print("in advertise")
+            if self.simulationCount > 1:
+                return
             async def a_advertise(self):
                 print("in async advertise")
                 self.world_publisher = await self.manager.advertise(
@@ -105,19 +112,25 @@ class GazeboSimulation(Simulation):
                     "scenic_delete_models_msgs.msgs"
                 )            
                 def callback(data):
-                    breakpoint()
+                    # breakpoint()
                     print("In callback: numSpawns is " + str(self.numSpawns))
                     # due to how gazebo propagates spawns, the initial callback for first object needs to be a NOP
-                    # if (self.numSpawns == 1):
-                        # return
+                    # if (self.numSpawns < self.initCount):
+                    #     print("skipping this callback")
+                    #     return
                     print("In callback, curr event counter is: " + str(self.eventCounter))
                     self.eventCounter -=1 
                     if (self.eventCounter == 0):
                         self.objectDataEvent.set()
+                    if (self.eventCounter < 0):
+                        self.eventCounter = self.initCount
                     stats = scenic_obj_info_pb2.ScenicObjectInfo()
                     stats.ParseFromString(data)
+                    print("obj in callback's name: " + stats.name)
+
                     # on each update, rewrite current stats for the target object
                     self.object_map[stats.name] = stats
+                    print(self.object_map)
                 self.stats_subscriber  = await self.manager.subscribe(
                     '/gazebo/default/scenic_model_stats', "scenic_obj_info_msgs.msgs", callback
                 )
@@ -134,9 +147,8 @@ class GazeboSimulation(Simulation):
             print("Error Not Connected to Pygazebo")
             return
         # reverse list to see if gazebo is ignoring first spawn message
-        t = reversed(scene.objects)
-        # for obj in scene.objects:
-        for obj in t:
+        # t = reversed(scene.objects)
+        for obj in scene.objects:
             if (hasattr(obj, "modelSDF")):
                 self.createObjectInSimulator(obj)
             print("Object: " + str(obj))
@@ -155,7 +167,13 @@ class GazeboSimulation(Simulation):
             print("end a_step")
         self.loop.run_until_complete(a_step(self))
         print("end step")
-
+    
+    def internal_step(self):
+        async def a_internal_step(self):
+            print("internal gazebo step")
+            await self.world_publisher.publish(self.wc_step)
+        self.loop.run_until_complete(a_internal_step(self))
+    
     # currently assuming that object is some kind of sdf string
     def createObjectInSimulator(self, obj):
         print("in create object")
@@ -166,16 +184,16 @@ class GazeboSimulation(Simulation):
             # print(obj)
             factory_msg = pygazebo.msg.factory_pb2.Factory()
             factory_msg.sdf = obj.modelSDF
-            print(factory_msg.sdf)
+            # print(factory_msg.sdf)
             await asyncio.sleep(1)
             await self.factory_publisher.publish(factory_msg)
-            # if all spawn messages have been sent, do one iteration to propagate spawn requests
-            if (self.numSpawns == self.initCount):
-                await self.world_publisher.publish(self.wc_step)
-
             print("end async model spawn ")
         self.loop.run_until_complete(a_createObjectInSimulator(self, obj))
-        print("end create object")
+         # if all spawn messages have been sent, do one iteration to propagate spawn requests
+        if (self.numSpawns <= self.initCount):
+            self.internal_step()
+        
+
     # overwrite updateObjects
     def updateObjects(self):
         async def a_updateObjects(self):
@@ -183,6 +201,8 @@ class GazeboSimulation(Simulation):
             await self.objectDataEvent.wait()
         self.loop.run_until_complete(a_updateObjects(self))
         super().updateObjects()
+
+
     def getProperties(self, obj, properties):
         pos_x = self.object_map[obj.name].position.x
         pos_y = self.object_map[obj.name].position.y
@@ -207,38 +227,8 @@ class GazeboSimulation(Simulation):
 	    speed=scenic_speed,
 	    angularSpeed=scenic_ang_speed,
         )
+        print(values)
         return values        
-        # async def a_getProperties(self, obj):
-        #     print("about to wait on objectDataEvent")
-        #     await self.objectDataEvent.wait()
-        #     # super().updateObjects()
-        #     print("Done waiting on objectDataEvent")
-        #     # position + elevation
-        #     pos_x = self.object_map[obj.name].position.x
-        #     pos_y = self.object_map[obj.name].position.y
-        #     scenic_position = Vector(pos_x, pos_y)
-        #     scenic_elevation = self.object_map[obj.name].position.z
-        #     # velocity + speed
-        #     vel_x = self.object_map[obj.name].linVelocity.x
-        #     vel_y = self.object_map[obj.name].linVelocity.y
-        #     scenic_velocity = (vel_x, vel_y)
-        #     scenic_speed = math.hypot(*scenic_velocity)
-        #     # angular speed
-        #     scenic_ang_speed = self.object_map[obj.name].angVelocity.y
-        #     # converting quaternion to scenic heading
-        #     py_quat = [self.object_map[obj.name].orientation.x, self.object_map[obj.name].orientation.y, self.object_map[obj.name].orientation.z, self.object_map[obj.name].orientation.w]
-        #     r = R.from_quat(py_quat)
-        #     heading_array = r.as_euler('zxy')
-        #     values = dict(
-	    #     position=scenic_position,
-	    #     elevation=scenic_elevation,
-	    #     heading=heading_array[0],
-	    #     velocity=scenic_velocity,
-	    #     speed=scenic_speed,
-	    #     angularSpeed=scenic_ang_speed,
-        #     )
-        #     return values
-        # return self.loop.run_until_complete(a_getProperties(self, obj))
     def destroy(self):
         print("in simulation destroy")
         async def a_destroy(self):

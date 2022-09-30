@@ -1,7 +1,7 @@
 model scenic.simulators.gazebo.model
 workspace = Workspace(RectangularRegion((0, 0), 0, 50, 50))
 class Box(GazeboObject):
-    name: 'scenicbox'
+    name: 'scenicegobox'
     modelSDF:  """<?xml version='1.0'?>
         <sdf version ='1.5'>
           <model name ='scenicegobox'>
@@ -84,4 +84,4 @@ ego = Box
 NotEgoBox in workspace
 NotEgoBox in workspace
 NotEgoBox in workspace
-terminate after 2
+terminate after 5

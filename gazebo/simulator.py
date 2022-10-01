@@ -191,6 +191,19 @@ class GazeboSimulation(Simulation):
             print("in factory!")
             factory_msg = pygazebo.msg.factory_pb2.Factory()
             factory_msg.sdf = obj.modelSDF
+            pose_msg = pygazebo.msg.pose_pb2.Pose()
+            position_msg = pygazebo.msg.vector3d_pb2.Vector3d()
+            orientation_msg = pygazebo.msg.quaternion_pb2.Quaternion()
+            orientation_msg.x = 0
+            orientation_msg.y = 0
+            orientation_msg.z = 0
+            orientation_msg.w = 1
+            position_msg.x = obj.position.x 
+            position_msg.y = obj.position.y 
+            position_msg.z = obj.elevation if obj.elevation is not None else 0
+            pose_msg.position.CopyFrom(position_msg)
+            pose_msg.orientation.CopyFrom(orientation_msg)
+            factory_msg.pose.CopyFrom(pose_msg)
             await self.factory_publisher.publish(factory_msg)
             await asyncio.sleep(1)
             print("end async model spawn ")
@@ -234,7 +247,6 @@ class GazeboSimulation(Simulation):
         print("in simulation destroy")
         async def a_destroy(self):
             print("in async simulation destroy")
-            # await asyncio.sleep(1)
             await self.manager.unsubscribe(self.stats_subscriber)
             await asyncio.sleep(1)
             await self.stats_subscriber.remove()
